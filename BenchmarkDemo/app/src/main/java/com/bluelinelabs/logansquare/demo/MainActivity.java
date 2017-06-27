@@ -73,9 +73,9 @@ public class MainActivity extends ActionBarActivity {
         mResponsesToSerialize = getResponsesToParse();
 
         mBarChart = (BarChart)findViewById(R.id.bar_chart);
-        mBarChart.setColumnTitles(new String[] {"Gson Buffered", "Moshi Buffered", "Kryo Buffered"});
-//        mBarChart.setColumnTitles(new String[] {"Gson String", "Gson Buffered", "Moshi String", "Moshi Buffered",
-//        "Kryo Buffered"});
+//        mBarChart.setColumnTitles(new String[] {"Gson Buffered", "Moshi Buffered", "Kryo Buffered"});
+        mBarChart.setColumnTitles(new String[] {"Gson String", "Gson Buffered", "Moshi String", "Moshi Buffered",
+        "Kryo Buffered"});
 
         findViewById(R.id.btn_parse_tests).setOnClickListener(new OnClickListener() {
             @Override

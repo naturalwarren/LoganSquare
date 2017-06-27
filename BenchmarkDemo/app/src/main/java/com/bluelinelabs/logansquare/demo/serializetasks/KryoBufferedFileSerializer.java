@@ -6,6 +6,8 @@ import com.bluelinelabs.logansquare.demo.model.av.ResponseAV;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Output;
 
+import java.io.BufferedOutputStream;
+
 public class KryoBufferedFileSerializer extends Serializer {
 
     private final Context context;
@@ -24,7 +26,7 @@ public class KryoBufferedFileSerializer extends Serializer {
 
     @Override
     protected String serialize(ResponseAV response) {
-        try (Output output = new Output(context.openFileOutput("kryoserialize", Context.MODE_PRIVATE))) {
+        try (Output output = new Output(new BufferedOutputStream(context.openFileOutput("kryoserialize", Context.MODE_PRIVATE)))) {
             kryo.writeObject(output, response);
             return "";
         } catch (Exception e) {
