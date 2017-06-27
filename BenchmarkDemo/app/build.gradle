@@ -21,7 +21,7 @@ android {
     }
     defaultConfig {
         applicationId "com.bluelinelabs.logansquare.demo"
-        minSdkVersion 14
+        minSdkVersion 19
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"

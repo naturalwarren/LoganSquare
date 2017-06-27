@@ -6,36 +6,30 @@ import com.bluelinelabs.logansquare.demo.model.av.ResponseAV;
 import com.squareup.moshi.Moshi;
 
 import java.io.File;
-import java.io.IOException;
 
 import okio.BufferedSink;
 import okio.Okio;
 
-public class MoshiSerializer extends Serializer {
+public class MoshiBufferedFileSerializer extends Serializer {
 
     private final Moshi moshi;
-    private BufferedSink bufferedSink;
+    private final Context context;
 
-    public MoshiSerializer(
+    public MoshiBufferedFileSerializer(
             Context context,
             SerializeListener parseListener,
             ResponseAV response,
             Moshi moshi) {
         super(parseListener, response);
         this.moshi = moshi;
-
-        try {
-            bufferedSink = Okio.buffer(Okio.sink(new File(context.getFilesDir(), "moshiserializer")));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        this.context = context;
     }
 
     @Override
     protected String serialize(ResponseAV response) {
-        try {
+        try (BufferedSink bufferedSink = Okio.buffer(Okio.sink(new File(context.getFilesDir(), "moshiserializer"))) ) {
             moshi.adapter(ResponseAV.class).toJson(bufferedSink, response);
-            return response.toString();
+            return "";
         } catch (Exception e) {
             return null;
         } finally {

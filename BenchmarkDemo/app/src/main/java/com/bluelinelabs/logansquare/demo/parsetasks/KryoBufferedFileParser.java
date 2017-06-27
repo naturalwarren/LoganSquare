@@ -16,8 +16,8 @@ import java.util.Random;
 import okio.BufferedSource;
 import okio.Okio;
 
-public class KryoParser extends Parser {
-    private static Random rand = new Random();
+public class KryoBufferedFileParser extends Parser {
+    private static volatile Random rand = new Random();
 
     private final Kryo kryo;
     private byte[] bytes;
@@ -25,7 +25,7 @@ public class KryoParser extends Parser {
     private Output output;
     private int randNum;
 
-    public KryoParser(
+    public KryoBufferedFileParser(
             Context context,
             ParseListener parseListener,
             String jsonString,

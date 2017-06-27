@@ -12,14 +12,14 @@ import java.io.Reader;
 import java.util.Random;
 
 
-public class GsonParser extends Parser {
-    private static Random rand = new Random();
+public class GsonBufferedFileParser extends Parser {
+    private static volatile Random rand = new Random();
 
     private final Gson gson;
     private Reader reader;
     private int randNum;
 
-    public GsonParser(
+    public GsonBufferedFileParser(
             Context context,
             ParseListener parseListener,
             String jsonString,

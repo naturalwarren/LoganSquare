@@ -12,14 +12,14 @@ import java.util.Random;
 import okio.BufferedSource;
 import okio.Okio;
 
-public class MoshiParser extends Parser {
-    private static Random rand = new Random();
+public class MoshiBufferedFileParser extends Parser {
+    private static volatile Random rand = new Random();
 
     private final Moshi moshi;
     private BufferedSource bufferedSource;
     private int randNum;
 
-    public MoshiParser(
+    public MoshiBufferedFileParser(
             Context context,
             ParseListener parseListener,
             String jsonString,

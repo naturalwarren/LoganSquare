@@ -9,33 +9,28 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 
-public class GsonSerializer extends Serializer {
+public class GsonBufferedFileSerializer extends Serializer {
 
     private final Gson gson;
-    private Writer writer;
+    private final Context context;
 
-    public GsonSerializer(
+    public GsonBufferedFileSerializer(
             Context context,
             SerializeListener parseListener,
             ResponseAV response,
-            Gson gson) {
+            Gson gson)  {
         super(parseListener, response);
         this.gson = gson;
-
-        try {
-            writer = new OutputStreamWriter(context.openFileOutput("gsonserializer.txt", Context.MODE_PRIVATE));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        this.context = context;
     }
 
     @Override
     protected String serialize(ResponseAV response) {
-        try {
+        try (Writer writer = new OutputStreamWriter(context.openFileOutput("gsonserializer.txt", Context.MODE_PRIVATE))) {
             gson.toJson(response, writer);
             writer.flush();
-            return response.toString();
-        } catch (Exception e) {
+            return "";
+        } catch (IOException e) {
             return null;
         } finally {
             System.gc();
