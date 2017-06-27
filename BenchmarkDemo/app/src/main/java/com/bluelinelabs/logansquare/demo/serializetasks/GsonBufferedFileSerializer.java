@@ -28,7 +28,6 @@ public class GsonBufferedFileSerializer extends Serializer {
     protected String serialize(ResponseAV response) {
         try (Writer writer = new OutputStreamWriter(context.openFileOutput("gsonserializer.txt", Context.MODE_PRIVATE))) {
             gson.toJson(response, writer);
-            writer.flush();
             return "";
         } catch (IOException e) {
             return null;

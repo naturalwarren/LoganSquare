@@ -15,8 +15,10 @@ import com.bluelinelabs.logansquare.demo.parsetasks.ParseResult;
 import com.bluelinelabs.logansquare.demo.parsetasks.Parser;
 import com.bluelinelabs.logansquare.demo.parsetasks.Parser.ParseListener;
 import com.bluelinelabs.logansquare.demo.serializetasks.GsonBufferedFileSerializer;
+import com.bluelinelabs.logansquare.demo.serializetasks.GsonFileSerializer;
 import com.bluelinelabs.logansquare.demo.serializetasks.KryoBufferedFileSerializer;
 import com.bluelinelabs.logansquare.demo.serializetasks.MoshiBufferedFileSerializer;
+import com.bluelinelabs.logansquare.demo.serializetasks.MoshiFileSerializer;
 import com.bluelinelabs.logansquare.demo.serializetasks.SerializeResult;
 import com.bluelinelabs.logansquare.demo.serializetasks.Serializer;
 import com.bluelinelabs.logansquare.demo.serializetasks.Serializer.SerializeListener;
@@ -71,7 +73,9 @@ public class MainActivity extends ActionBarActivity {
         mResponsesToSerialize = getResponsesToParse();
 
         mBarChart = (BarChart)findViewById(R.id.bar_chart);
-        mBarChart.setColumnTitles(new String[] {"GSON", "Moshi", "Kryo"});
+        mBarChart.setColumnTitles(new String[] {"Gson Buffered", "Moshi Buffered", "Kryo Buffered"});
+//        mBarChart.setColumnTitles(new String[] {"Gson String", "Gson Buffered", "Moshi String", "Moshi Buffered",
+//        "Kryo Buffered"});
 
         findViewById(R.id.btn_parse_tests).setOnClickListener(new OnClickListener() {
             @Override
@@ -144,7 +148,9 @@ public class MainActivity extends ActionBarActivity {
         List<Serializer> serializers = new ArrayList<>();
         for (ResponseAV response : mResponsesToSerialize) {
             for (int iteration = 0; iteration < ITERATIONS; iteration++) {
+                serializers.add(new GsonFileSerializer(this, mSerializeListener, response, gson));
                 serializers.add(new GsonBufferedFileSerializer(this, mSerializeListener, response, gson));
+                serializers.add(new MoshiFileSerializer(this, mSerializeListener, response, moshi));
                 serializers.add(new MoshiBufferedFileSerializer(this, mSerializeListener, response, moshi));
                 serializers.add(new KryoBufferedFileSerializer(this, mSerializeListener, response, kryo));
             }
@@ -180,7 +186,6 @@ public class MainActivity extends ActionBarActivity {
         } else if (parser instanceof MoshiBufferedFileParser) {
             mBarChart.addTiming(section, 1, parseResult.runDuration / 1000f);
         } else if (parser instanceof KryoBufferedFileParser) {
-
             mBarChart.addTiming(section, 2, parseResult.runDuration / 1000f);
         }
     }
@@ -206,10 +211,14 @@ public class MainActivity extends ActionBarActivity {
         }
 
         if (serializer instanceof GsonBufferedFileSerializer) {
-            mBarChart.addTiming(section, 0, serializeResult.runDuration / 1000f);
-        } else if (serializer instanceof MoshiBufferedFileSerializer) {
             mBarChart.addTiming(section, 1, serializeResult.runDuration / 1000f);
+        }else if (serializer instanceof MoshiBufferedFileSerializer) {
+            mBarChart.addTiming(section, 3, serializeResult.runDuration / 1000f);
         } else if (serializer instanceof KryoBufferedFileSerializer) {
+            mBarChart.addTiming(section, 4, serializeResult.runDuration / 1000f);
+        } else if (serializer instanceof GsonFileSerializer) {
+            mBarChart.addTiming(section, 0, serializeResult.runDuration / 1000f);
+        } else if (serializer instanceof MoshiFileSerializer) {
             mBarChart.addTiming(section, 2, serializeResult.runDuration / 1000f);
         }
     }

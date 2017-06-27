@@ -3,29 +3,34 @@ package com.bluelinelabs.logansquare.demo.serializetasks;
 import android.content.Context;
 
 import com.bluelinelabs.logansquare.demo.model.av.ResponseAV;
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Output;
+import com.squareup.moshi.Moshi;
 
-public class KryoBufferedFileSerializer extends Serializer {
+import java.io.File;
 
+import okio.BufferedSink;
+import okio.Okio;
+
+public class MoshiFileSerializer extends Serializer {
+
+    private final Moshi moshi;
     private final Context context;
-    private Kryo kryo;
 
-    public KryoBufferedFileSerializer(
+    public MoshiFileSerializer(
             Context context,
             SerializeListener parseListener,
             ResponseAV response,
-            Kryo kryo) {
+            Moshi moshi) {
         super(parseListener, response);
-        this.kryo = kryo;
+        this.moshi = moshi;
         this.context = context;
-
     }
 
     @Override
     protected String serialize(ResponseAV response) {
-        try (Output output = new Output(context.openFileOutput("kryoserialize", Context.MODE_PRIVATE))) {
-            kryo.writeObject(output, response);
+        try (BufferedSink bufferedSink = Okio.buffer(Okio.sink(new File(context.getFilesDir(), "moshifileserializer")))
+         ) {
+            String s = moshi.adapter(ResponseAV.class).toJson(response);
+            bufferedSink.writeUtf8(s);
             return "";
         } catch (Exception e) {
             return null;
@@ -33,6 +38,4 @@ public class KryoBufferedFileSerializer extends Serializer {
             System.gc();
         }
     }
-
 }
-

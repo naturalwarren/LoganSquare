@@ -3,36 +3,38 @@ package com.bluelinelabs.logansquare.demo.serializetasks;
 import android.content.Context;
 
 import com.bluelinelabs.logansquare.demo.model.av.ResponseAV;
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Output;
+import com.google.gson.Gson;
 
-public class KryoBufferedFileSerializer extends Serializer {
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 
+public class GsonFileSerializer extends Serializer {
+
+    private final Gson gson;
     private final Context context;
-    private Kryo kryo;
 
-    public KryoBufferedFileSerializer(
+    public GsonFileSerializer (
             Context context,
             SerializeListener parseListener,
             ResponseAV response,
-            Kryo kryo) {
+            Gson gson)  {
         super(parseListener, response);
-        this.kryo = kryo;
+        this.gson = gson;
         this.context = context;
-
     }
 
     @Override
     protected String serialize(ResponseAV response) {
-        try (Output output = new Output(context.openFileOutput("kryoserialize", Context.MODE_PRIVATE))) {
-            kryo.writeObject(output, response);
+        try (Writer writer = new OutputStreamWriter(context.openFileOutput("gsonfileserializer.txt", Context
+        .MODE_PRIVATE))) {
+            String jsonString = gson.toJson(response);
+            writer.write(jsonString);
             return "";
-        } catch (Exception e) {
+        } catch (IOException e) {
             return null;
         } finally {
             System.gc();
         }
     }
-
 }
-
