@@ -1,7 +1,7 @@
 package com.bluelinelabs.logansquare.demo.parsetasks;
 
-import com.bluelinelabs.logansquare.demo.model.Response;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.bluelinelabs.logansquare.demo.model.av.ResponseAV;
 
 public class JacksonDatabindParser extends Parser {
 
@@ -15,8 +15,8 @@ public class JacksonDatabindParser extends Parser {
     @Override
     protected int parse(String json) {
         try {
-            Response response = objectMapper.readValue(json, Response.class);
-            return response.users.size();
+            ResponseAV response = objectMapper.readValue(json, ResponseAV.class);
+            return response.users().size();
         } catch (Exception e) {
             return 0;
         } finally {

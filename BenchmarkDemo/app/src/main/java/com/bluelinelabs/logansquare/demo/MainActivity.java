@@ -7,28 +7,32 @@ import android.support.v7.app.ActionBarActivity;
 import android.view.View;
 import android.view.View.OnClickListener;
 
-import com.bluelinelabs.logansquare.LoganSquare;
-import com.bluelinelabs.logansquare.demo.model.Response;
+import com.bluelinelabs.logansquare.demo.model.av.ResponseAV;
 import com.bluelinelabs.logansquare.demo.parsetasks.GsonParser;
-import com.bluelinelabs.logansquare.demo.parsetasks.JacksonDatabindParser;
-import com.bluelinelabs.logansquare.demo.parsetasks.LoganSquareParser;
+import com.bluelinelabs.logansquare.demo.parsetasks.KryoParser;
 import com.bluelinelabs.logansquare.demo.parsetasks.MoshiParser;
 import com.bluelinelabs.logansquare.demo.parsetasks.ParseResult;
 import com.bluelinelabs.logansquare.demo.parsetasks.Parser;
 import com.bluelinelabs.logansquare.demo.parsetasks.Parser.ParseListener;
 import com.bluelinelabs.logansquare.demo.serializetasks.GsonSerializer;
-import com.bluelinelabs.logansquare.demo.serializetasks.JacksonDatabindSerializer;
-import com.bluelinelabs.logansquare.demo.serializetasks.LoganSquareSerializer;
+import com.bluelinelabs.logansquare.demo.serializetasks.KryoSerializer;
 import com.bluelinelabs.logansquare.demo.serializetasks.MoshiSerializer;
 import com.bluelinelabs.logansquare.demo.serializetasks.SerializeResult;
 import com.bluelinelabs.logansquare.demo.serializetasks.Serializer;
 import com.bluelinelabs.logansquare.demo.serializetasks.Serializer.SerializeListener;
 import com.bluelinelabs.logansquare.demo.widget.BarChart;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.serializers.CompatibleFieldSerializer;
 import com.google.gson.Gson;
-
+import com.google.gson.GsonBuilder;
+import com.naturalwarren.cereal.adapter.GeneratedJsonAdapterFactory;
+import com.naturalwarren.cereal.adapter.GeneratedTypeAdapterFactory;
 import com.squareup.moshi.Moshi;
+
+import org.objenesis.strategy.StdInstantiatorStrategy;
+
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -43,7 +47,7 @@ public class MainActivity extends ActionBarActivity {
 
     private BarChart mBarChart;
     private List<String> mJsonStringsToParse;
-    private List<Response> mResponsesToSerialize;
+    private List<ResponseAV> mResponsesToSerialize;
 
     private final ParseListener mParseListener = new ParseListener() {
         @Override
@@ -67,12 +71,16 @@ public class MainActivity extends ActionBarActivity {
         mResponsesToSerialize = getResponsesToParse();
 
         mBarChart = (BarChart)findViewById(R.id.bar_chart);
-        mBarChart.setColumnTitles(new String[] {"GSON", "Jackson", "LoganSquare", "Moshi"});
+        mBarChart.setColumnTitles(new String[] {"GSON", "Moshi", "Kryo"});
 
         findViewById(R.id.btn_parse_tests).setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                performParseTests();
+                try {
+                    performParseTests();
+                } catch (IOException e ) {
+
+                }
             }
         });
 
@@ -84,20 +92,29 @@ public class MainActivity extends ActionBarActivity {
         });
     }
 
-    private void performParseTests() {
+    private void performParseTests() throws IOException {
         mBarChart.clear();
         mBarChart.setSections(new String[] {"Parse 60 items", "Parse 20 items", "Parse 7 items", "Parse 2 items"});
 
-        Gson gson = new Gson();
-        ObjectMapper objectMapper = new ObjectMapper();
-        Moshi moshi = new Moshi.Builder().build();
+        Gson gson = new GsonBuilder()
+                .registerTypeAdapterFactory(GeneratedTypeAdapterFactory.create())
+                .create();
+        Moshi moshi = new Moshi.Builder()
+                .add(GeneratedJsonAdapterFactory.create())
+                .build();
+
+        Kryo kryo = new Kryo();
+        kryo.setDefaultSerializer(CompatibleFieldSerializer.class);
+        Kryo.DefaultInstantiatorStrategy instantiatorStrategy = new Kryo.DefaultInstantiatorStrategy();
+        instantiatorStrategy.setFallbackInstantiatorStrategy(new StdInstantiatorStrategy());
+        kryo.setInstantiatorStrategy(instantiatorStrategy);
+
         List<Parser> parsers = new ArrayList<>();
         for (String jsonString : mJsonStringsToParse) {
             for (int iteration = 0; iteration < ITERATIONS; iteration++) {
-                parsers.add(new GsonParser(mParseListener, jsonString, gson));
-                parsers.add(new JacksonDatabindParser(mParseListener, jsonString, objectMapper));
-                parsers.add(new MoshiParser(mParseListener, jsonString, moshi));
-                parsers.add(new LoganSquareParser(mParseListener, jsonString));
+                parsers.add(new GsonParser(this, mParseListener, jsonString, gson));
+                parsers.add(new MoshiParser(this, mParseListener, jsonString, moshi));
+                parsers.add(new KryoParser(this, mParseListener, jsonString, kryo, moshi));
             }
         }
 
@@ -110,16 +127,26 @@ public class MainActivity extends ActionBarActivity {
         mBarChart.clear();
         mBarChart.setSections(new String[] {"Serialize 60 items", "Serialize 20 items", "Serialize 7 items", "Serialize 2 items"});
 
-        Gson gson = new Gson();
-        ObjectMapper objectMapper = new ObjectMapper();
-        Moshi moshi = new Moshi.Builder().build();
+        Gson gson = new GsonBuilder()
+                .registerTypeAdapterFactory(GeneratedTypeAdapterFactory.create())
+                .create();
+
+        Moshi moshi = new Moshi.Builder()
+                .add(GeneratedJsonAdapterFactory.create())
+                .build();
+
+        Kryo kryo = new Kryo();
+        kryo.setDefaultSerializer(CompatibleFieldSerializer.class);
+        Kryo.DefaultInstantiatorStrategy instantiatorStrategy = new Kryo.DefaultInstantiatorStrategy();
+        instantiatorStrategy.setFallbackInstantiatorStrategy(new StdInstantiatorStrategy());
+        kryo.setInstantiatorStrategy(instantiatorStrategy);
+
         List<Serializer> serializers = new ArrayList<>();
-        for (Response response : mResponsesToSerialize) {
+        for (ResponseAV response : mResponsesToSerialize) {
             for (int iteration = 0; iteration < ITERATIONS; iteration++) {
-                serializers.add(new GsonSerializer(mSerializeListener, response, gson));
-                serializers.add(new JacksonDatabindSerializer(mSerializeListener, response, objectMapper));
-                serializers.add(new LoganSquareSerializer(mSerializeListener, response));
-                serializers.add(new MoshiSerializer(mSerializeListener, response, moshi));
+                serializers.add(new GsonSerializer(this, mSerializeListener, response, gson));
+                serializers.add(new MoshiSerializer(this, mSerializeListener, response, moshi));
+                serializers.add(new KryoSerializer(this, mSerializeListener, response, kryo));
             }
         }
 
@@ -150,12 +177,11 @@ public class MainActivity extends ActionBarActivity {
 
         if (parser instanceof GsonParser) {
             mBarChart.addTiming(section, 0, parseResult.runDuration / 1000f);
-        } else if (parser instanceof JacksonDatabindParser) {
-            mBarChart.addTiming(section, 1, parseResult.runDuration / 1000f);
-        } else if (parser instanceof LoganSquareParser) {
-            mBarChart.addTiming(section, 2, parseResult.runDuration / 1000f);
         } else if (parser instanceof MoshiParser) {
-            mBarChart.addTiming(section, 3, parseResult.runDuration / 1000f);
+            mBarChart.addTiming(section, 1, parseResult.runDuration / 1000f);
+        } else if (parser instanceof KryoParser) {
+
+            mBarChart.addTiming(section, 2, parseResult.runDuration / 1000f);
         }
     }
 
@@ -181,21 +207,22 @@ public class MainActivity extends ActionBarActivity {
 
         if (serializer instanceof GsonSerializer) {
             mBarChart.addTiming(section, 0, serializeResult.runDuration / 1000f);
-        } else if (serializer instanceof JacksonDatabindSerializer) {
-            mBarChart.addTiming(section, 1, serializeResult.runDuration / 1000f);
-        } else if (serializer instanceof LoganSquareSerializer) {
-            mBarChart.addTiming(section, 2, serializeResult.runDuration / 1000f);
         } else if (serializer instanceof MoshiSerializer) {
-            mBarChart.addTiming(section, 3, serializeResult.runDuration / 1000f);
+            mBarChart.addTiming(section, 1, serializeResult.runDuration / 1000f);
+        } else if (serializer instanceof KryoSerializer) {
+            mBarChart.addTiming(section, 2, serializeResult.runDuration / 1000f);
         }
     }
 
-    private List<Response> getResponsesToParse() {
-        List<Response> responses = new ArrayList<>();
+    private List<ResponseAV> getResponsesToParse() {
+        List<ResponseAV> responses = new ArrayList<>();
+        Gson gson = new GsonBuilder()
+                .registerTypeAdapterFactory(GeneratedTypeAdapterFactory.create())
+                .create();
 
         try {
             for (String jsonString : mJsonStringsToParse) {
-                responses.add(LoganSquare.parse(jsonString, Response.class));
+                responses.add(gson.fromJson(jsonString, ResponseAV.class));
             }
         } catch (Exception e) {
             new AlertDialog.Builder(this)

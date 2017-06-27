@@ -2,7 +2,7 @@ package com.bluelinelabs.logansquare.demo.serializetasks;
 
 import android.os.AsyncTask;
 
-import com.bluelinelabs.logansquare.demo.model.Response;
+import com.bluelinelabs.logansquare.demo.model.av.ResponseAV;
 
 import java.util.concurrent.TimeUnit;
 
@@ -13,9 +13,9 @@ public abstract class Serializer extends AsyncTask<Void, Void, SerializeResult> 
     }
 
     private final SerializeListener mParseListener;
-    private final Response mResponse;
+    private final ResponseAV mResponse;
 
-    protected Serializer(SerializeListener parseListener, Response response) {
+    protected Serializer(SerializeListener parseListener, ResponseAV response) {
         mParseListener = parseListener;
         mResponse = response;
     }
@@ -28,7 +28,7 @@ public abstract class Serializer extends AsyncTask<Void, Void, SerializeResult> 
         long endTime = System.nanoTime();
         long duration = TimeUnit.NANOSECONDS.toMicros(endTime - startTime);
 
-        return new SerializeResult(duration, mResponse.users.size());
+        return new SerializeResult(duration, mResponse.users().size());
     }
 
     @Override
@@ -36,5 +36,5 @@ public abstract class Serializer extends AsyncTask<Void, Void, SerializeResult> 
         mParseListener.onComplete(this, parseResult);
     }
 
-    protected abstract String serialize(Response response);
+    protected abstract String serialize(ResponseAV response);
 }

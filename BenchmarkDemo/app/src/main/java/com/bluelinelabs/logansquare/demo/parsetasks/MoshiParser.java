@@ -1,21 +1,47 @@
 package com.bluelinelabs.logansquare.demo.parsetasks;
 
-import com.bluelinelabs.logansquare.demo.model.Response;
+import android.content.Context;
+
+import com.bluelinelabs.logansquare.demo.model.av.ResponseAV;
 import com.squareup.moshi.Moshi;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Random;
+
+import okio.BufferedSource;
+import okio.Okio;
+
 public class MoshiParser extends Parser {
+    private static Random rand = new Random();
 
     private final Moshi moshi;
+    private BufferedSource bufferedSource;
+    private int randNum;
 
-    public MoshiParser(Parser.ParseListener parseListener, String jsonString, Moshi moshi) {
+    public MoshiParser(
+            Context context,
+            ParseListener parseListener,
+            String jsonString,
+            Moshi moshi) {
         super(parseListener, jsonString);
         this.moshi = moshi;
+        randNum = rand.nextInt(10000000) + 1;
+
+        try {
+            File file = new File(context.getFilesDir(), "moshiparser" + randNum);
+            Okio.buffer(Okio.sink(file)).writeUtf8(jsonString).flush();
+
+            bufferedSource = Okio.buffer(Okio.source(file));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     protected int parse(String json) {
         try {
-            return moshi.adapter(Response.class).fromJson(json).users.size();
+            return moshi.adapter(ResponseAV.class).fromJson(bufferedSource).users().size();
         } catch (Exception e) {
             return 0;
         } finally {

@@ -3,30 +3,27 @@ package com.bluelinelabs.logansquare.demo.serializetasks;
 import android.content.Context;
 
 import com.bluelinelabs.logansquare.demo.model.av.ResponseAV;
-import com.squareup.moshi.Moshi;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Output;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.FileNotFoundException;
 
-import okio.BufferedSink;
-import okio.Okio;
+public class KryoSerializer extends Serializer {
 
-public class MoshiSerializer extends Serializer {
+    private Kryo kryo;
+    private Output output;
 
-    private final Moshi moshi;
-    private BufferedSink bufferedSink;
-
-    public MoshiSerializer(
+    public KryoSerializer(
             Context context,
             SerializeListener parseListener,
             ResponseAV response,
-            Moshi moshi) {
+            Kryo kryo) {
         super(parseListener, response);
-        this.moshi = moshi;
+        this.kryo = kryo;
 
         try {
-            bufferedSink = Okio.buffer(Okio.sink(new File(context.getFilesDir(), "moshiserializer")));
-        } catch (IOException e) {
+            output = new Output(context.openFileOutput("kryoserialize", Context.MODE_PRIVATE));
+        } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
     }
@@ -34,12 +31,15 @@ public class MoshiSerializer extends Serializer {
     @Override
     protected String serialize(ResponseAV response) {
         try {
-            moshi.adapter(ResponseAV.class).toJson(bufferedSink, response);
+            kryo.writeObject(output, response);
+            output.flush();
             return response.toString();
         } catch (Exception e) {
             return null;
         } finally {
-           System.gc();
+            System.gc();
         }
     }
+
 }
+

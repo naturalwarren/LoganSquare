@@ -1,7 +1,7 @@
 package com.bluelinelabs.logansquare.demo.parsetasks;
 
 import com.bluelinelabs.logansquare.LoganSquare;
-import com.bluelinelabs.logansquare.demo.model.Response;
+import com.bluelinelabs.logansquare.demo.model.av.ResponseAV;
 
 public class LoganSquareParser extends Parser {
 
@@ -12,8 +12,8 @@ public class LoganSquareParser extends Parser {
     @Override
     protected int parse(String json) {
         try {
-            Response response = LoganSquare.parse(json, Response.class);
-            return response.users.size();
+            ResponseAV response = LoganSquare.parse(json, ResponseAV.class);
+            return response.users().size();
         } catch (Exception e) {
             return 0;
         } finally {
